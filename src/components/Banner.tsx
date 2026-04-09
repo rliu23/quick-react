@@ -3,7 +3,7 @@ interface BannerProps {
 }
 const Banner = ({title}: BannerProps) => (
     <header>
-        <h1>{title}</h1>
+        <h1 className="text-2xl">{title}</h1>
     </header>
 );
 

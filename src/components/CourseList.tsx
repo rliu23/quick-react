@@ -23,7 +23,7 @@ const CourseList = ({courses}: CourseListProps ) => (
 
           <div className="flex-grow">{course.title}</div>
 
-          <div className="flex-grow border-t border-gray-400"></div>
+          <div className="border-t border-gray-400"></div>
           {course.meets}
         </div>
       </li>
