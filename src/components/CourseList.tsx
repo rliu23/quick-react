@@ -1,4 +1,6 @@
 import { useJsonQuery } from "../utilities/fetch";
+import RadioControl from "./RadioControl";
+import { useState } from "react";
 
 type Course = {
     term: string;
@@ -12,15 +14,21 @@ interface courseCollection {
 }
 
 const CourseList = () => {
+  const [selected, setSelected] = useState('Fall');
   const [json, isLoading, error] = useJsonQuery('https://courses.cs.northwestern.edu/394/guides/data/cs-courses.php');
   if (error) return <h1>Error loading user data: {`${error}`}</h1>;
   if (isLoading) return <h1>Loading user data...</h1>;
   if (!json) return <h1>No user data found</h1>;
 
   const collection = json as courseCollection;
+  const selectedCourses = selected === '' ? collection.courses : 
+  Object.fromEntries(Object.entries(collection.courses).filter(([_, course]) => course.term === selected));
   return (
+    <div>
+    <RadioControl name="term" options={["Fall", "Winter", "Spring"]} selected={selected} setSelected={setSelected}/>
     <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Object.entries(collection.courses).map(([id, course]) => (
+      
+      {Object.entries(selectedCourses).map(([id, course]) => (
         <li
           key={id}
           className="border rounded-sm p-4"
@@ -38,6 +46,7 @@ const CourseList = () => {
         </li>
       ))}
     </ul>
+    </div>
   );
 };
 
