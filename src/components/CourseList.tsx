@@ -2,6 +2,10 @@ import { useJsonQuery } from "../utilities/fetch";
 import RadioControl from "./RadioControl";
 import { useState } from "react";
 
+const toggleList = <T,>(x: T, lst: T[]): T[] => (
+  lst.includes(x) ? lst.filter(y => y !== x) : [...lst, x]
+);
+
 type Course = {
     term: string;
     number: string;
@@ -15,11 +19,15 @@ interface courseCollection {
 
 const CourseList = () => {
   const [selected, setSelected] = useState('Fall');
+  const [courseCart, setCourseCart] = useState<String[]>([]);
+  const toggleCart = (id: string) => {
+    setCourseCart(courseCart => toggleList(id, courseCart));
+  };
   const [json, isLoading, error] = useJsonQuery('https://courses.cs.northwestern.edu/394/guides/data/cs-courses.php');
   if (error) return <h1>Error loading user data: {`${error}`}</h1>;
   if (isLoading) return <h1>Loading user data...</h1>;
   if (!json) return <h1>No user data found</h1>;
-
+  //console.log(courseCart);
   const collection = json as courseCollection;
   const selectedCourses = selected === '' ? collection.courses : 
   Object.fromEntries(Object.entries(collection.courses).filter(([_, course]) => course.term === selected));
@@ -42,6 +50,7 @@ const CourseList = () => {
 
             <div className="border-t border-gray-400"></div>
             {course.meets}
+            <input type="checkbox" onChange={() => toggleCart(id)} checked={courseCart.includes(id)}/>
           </div>
         </li>
       ))}
