@@ -1,6 +1,7 @@
 import { useJsonQuery } from "../utilities/fetch";
 import RadioControl from "./RadioControl";
 import { useState } from "react";
+import Modal from "./Modal";
 
 const toggleList = <T,>(x: T, lst: T[]): T[] => (
   lst.includes(x) ? lst.filter(y => y !== x) : [...lst, x]
@@ -20,6 +21,7 @@ interface courseCollection {
 const CourseList = () => {
   const [selected, setSelected] = useState('Fall');
   const [courseCart, setCourseCart] = useState<String[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const toggleCart = (id: string) => {
     setCourseCart(courseCart => toggleList(id, courseCart));
   };
@@ -31,9 +33,34 @@ const CourseList = () => {
   const collection = json as courseCollection;
   const selectedCourses = selected === '' ? collection.courses : 
   Object.fromEntries(Object.entries(collection.courses).filter(([_, course]) => course.term === selected));
+  const courseCartData = courseCart.map(id=>collection.courses[+id]).filter(Boolean);
   return (
     <div>
-    <RadioControl name="term" options={["Fall", "Winter", "Spring"]} selected={selected} setSelected={setSelected}/>
+    <div className="flex items-center justify-center gap-20">
+      <RadioControl  name="term" options={["Fall", "Winter", "Spring"]} selected={selected} setSelected={setSelected}/>
+      <button className="bg-blue-300 px-1 rounded" onClick={() => setIsOpen(true)}>
+        See Courses in Cart
+      </button>
+    </div>
+    <div className="py-3"></div>
+    
+    <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+      {courseCart.length === 0? (
+          <p>There are no courses selected. Click the checkbox on a course to select courses.</p>
+        )
+        :
+        (
+          <ul>
+            {courseCartData.map(course => {
+              return (
+                <p>CS {course.number}: {course.title} {course.meets}</p>
+              );
+            })}
+          </ul>
+        )
+      }
+    </Modal>
+    <div></div>
     <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       
       {Object.entries(selectedCourses).map(([id, course]) => (
