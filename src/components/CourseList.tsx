@@ -1,7 +1,8 @@
 import { useJsonQuery } from "../utilities/fetch";
 import RadioControl from "./RadioControl";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Modal from "./Modal";
+import { checkCourseOverlap } from "../utilities/timeconflict";
 
 const toggleList = <T,>(x: T, lst: T[]): T[] => (
   lst.includes(x) ? lst.filter(y => y !== x) : [...lst, x]
@@ -18,9 +19,13 @@ interface courseCollection {
   courses: Record<string, Course>
 }
 
+
+
+
+
 const CourseList = () => {
   const [selected, setSelected] = useState('Fall');
-  const [courseCart, setCourseCart] = useState<String[]>([]);
+  const [courseCart, setCourseCart] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const toggleCart = (id: string) => {
     setCourseCart(courseCart => toggleList(id, courseCart));
@@ -31,9 +36,30 @@ const CourseList = () => {
   if (!json) return <h1>No user data found</h1>;
   //console.log(courseCart);
   const collection = json as courseCollection;
-  const selectedCourses = selected === '' ? collection.courses : 
-  Object.fromEntries(Object.entries(collection.courses).filter(([_, course]) => course.term === selected));
-  const courseCartData = courseCart.map(id=>collection.courses[+id]).filter(Boolean);
+
+  const selectedCourses = useMemo(() => {
+  return selected === ''
+    ? collection.courses
+    : Object.fromEntries(
+        Object.entries(collection.courses).filter(
+          ([_, course]) => course.term === selected
+        )
+      );
+  }, [collection.courses, selected]);
+  //const selectedCourses = selected === '' ? collection.courses : 
+  //Object.fromEntries(Object.entries(collection.courses).filter(([_, course]) => course.term === selected));
+  const courseCartData = courseCart.map(id=>collection.courses[id]).filter(Boolean);
+  const isConflicting = (id: string, course: Course) :
+  boolean => {
+    return courseCart.some(selectedCourseID => {
+      if (selectedCourseID === id) {
+        return false;
+      }
+      const selectedCourse = collection.courses[selectedCourseID];
+      if (!course.meets) return false;
+      return checkCourseOverlap(course.meets, selectedCourse.meets);
+    })
+  }
   return (
     <div>
     <div className="flex items-center justify-center gap-20">
@@ -66,7 +92,7 @@ const CourseList = () => {
       {Object.entries(selectedCourses).map(([id, course]) => (
         <li
           key={id}
-          className="border rounded-sm p-4"
+          className={isConflicting(id, course) ? "opacity-30 border rounded-sm p-4" : "border rounded-sm p-4"}
         >
           <div className="flex flex-col gap-2 h-full">
             <div className="text-lg">
@@ -77,7 +103,7 @@ const CourseList = () => {
 
             <div className="border-t border-gray-400"></div>
             {course.meets}
-            <input type="checkbox" onChange={() => toggleCart(id)} checked={courseCart.includes(id)}/>
+            <input type="checkbox" className={isConflicting(id, course) ? "hidden" : ""} onChange={() => toggleCart(id)} checked={courseCart.includes(id)}/>
           </div>
         </li>
       ))}
